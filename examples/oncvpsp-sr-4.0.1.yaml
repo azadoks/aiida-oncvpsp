@@ -1,0 +1,10 @@
+---
+computer: mpc2976
+filepath_executable: /home/zadoks_a/.local/share/oncvpsp-4.0.1/bin/oncvpsp.x
+label: oncvpsp-sr-4.0.1
+description: ONCVPSP scalar-relativistic v4.0.1
+default_calc_job_plugin: oncvpsp.oncvpsp
+with_mpi: false
+prepend_text: ' '
+append_text: ' '
+non_interactive: true

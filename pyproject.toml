@@ -1,0 +1,59 @@
+[project]
+name = "aiida-oncvpsp"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+authors = [
+    { name = "Austin Zadoks", email = "austin.zadoks@protonmail.com" }
+]
+requires-python = ">=3.10"
+dependencies = [
+    "aiida-core>=2.7.1",
+    "aiida-pseudo>=1.8.0",
+    "pyoncvpsp==4.0.1"
+]
+
+[tool.uv.sources]
+pyoncvpsp = { git = "https://github.com/azadoks/oncvpsp", branch = "hdf5-output"}
+
+[tool.ruff]
+line-length = 120
+
+[tool.pylint.format]
+max-line-length = 120
+
+[tool.black]
+line-length = 120
+
+[tool.isort]
+profile = "black"
+force_sort_within_sections = true
+include_trailing_comma = true
+line_length = 120
+multi_line_output = 3
+
+[tool.flynt]
+line-length = 120
+fail-on-change = true
+
+[project.scripts]
+aiida-oncvpsp = "aiida_oncvpsp:main"
+
+[project.entry-points.'aiida.calculations']
+'oncvpsp.oncvpsp' = 'aiida_oncvpsp.calculations:OncvpspCalculation'
+
+[project.entry-points.'aiida.parsers']
+'oncvpsp.oncvpsp' = 'aiida_oncvpsp.parsers:OncvpspParser'
+
+[build-system]
+requires = ["uv_build>=0.9.7,<0.10.0"]
+build-backend = "uv_build"
+
+[dependency-groups]
+dev = [
+    "black>=25.11.0",
+    "flynt>=1.0.6",
+    "isort>=7.0.0",
+    "pylint>=4.0.4",
+    "ruff>=0.14.8",
+]
