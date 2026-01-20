@@ -23,7 +23,7 @@ class OncvpspCalculation(CalcJob):
         spec.input("metadata.options.with_hdf5", valid_type=bool, default=False)
         spec.input("parameters", valid_type=orm.Dict, help="Input parameters for ONCVPSP")
         # Outputs
-        spec.output("output_parameters", valid_type=orm.Dict)
+        spec.output("output_parameters", valid_type=orm.Dict, required=True)
         spec.output("local_potential", valid_type=XyData, required=False)
         spec.output("charge_densities", valid_type=XyData, required=False)
         spec.output("kinetic_energy_densities", valid_type=XyData, required=False)
@@ -35,6 +35,7 @@ class OncvpspCalculation(CalcJob):
         spec.output("log_derivatives", valid_type=ArrayData, required=False)
         spec.output("upf", valid_type=UpfData, required=False)
         spec.output("psp8", valid_type=Psp8Data, required=False)
+        spec.default_output_node = "output_parameters"
         # Exit codes
         spec.exit_code(
             301,
