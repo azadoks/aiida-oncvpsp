@@ -55,7 +55,7 @@ class OncvpspCalculation(CalcJob):
         )
         spec.exit_code(502, "ERROR_UNKNOWN_ERROR", message="An error unknown error occurred.")
         for i, error in enumerate(ONCVPSP_ERRORS):
-            spec.exit_code(500 + i + 3, error["name"].upper(), message=error["description"])
+            spec.exit_code(500 + i + 3, error["name"].upper(), message=error["description"])  # type: ignore
 
     def prepare_for_submission(self, folder):
         input_model = OncvpspInput(**self.inputs.parameters.get_dict())
