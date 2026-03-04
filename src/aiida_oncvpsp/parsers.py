@@ -31,11 +31,12 @@ class OncvpspParser(Parser):
             return self.exit_codes.ERROR_OUTPUT_FILE_MISSING
         except OSError:
             return self.exit_codes.ERROR_OUTPUT_FILE_UNREADABLE
-        if len(parser.errors) > 0:
+        if len(parser.errors) == 1:
+            self._report_messages(parser.errors, level="error")
+            return self.exit_codes.get(parser.errors[0]["name"].upper(), self.exit_codes.ERROR_UNKNOWN_ERROR)
+        elif len(parser.errors) > 1:
             self._report_messages(parser.errors, level="error")
             return self.exit_codes.ERROR_MULTIPLE_ERRORS
-        elif len(parser.errors) == 1:
-            return self.exit_codes.get(parser.errors[0]["name"], self.exit_codes.ERROR_UNKNOWN_ERROR)
         self._report_messages(parser.warnings, level="warning")
         if not parser.completed:
             return self.exit_codes.ERROR_RUN_NOT_COMPLETED
