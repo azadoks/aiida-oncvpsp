@@ -54,8 +54,9 @@ class OncvpspCalculation(CalcJob):
             message="The ONCVPSP run did not complete successfully, but no other error was found.",
         )
         spec.exit_code(502, "ERROR_UNKNOWN_ERROR", message="An error unknown error occurred.")
+        spec.exit_code(503, "ERROR_MULTIPLE_ERRORS", message="Multiple errors were found in the output file.")
         for i, error in enumerate(ONCVPSP_ERRORS):
-            spec.exit_code(500 + i + 3, error["name"].upper(), message=error["description"])  # type: ignore
+            spec.exit_code(500 + i + 4, error["name"].upper(), message=error["description"])  # type: ignore
 
     def prepare_for_submission(self, folder):
         input_model = OncvpspInput(**self.inputs.parameters.get_dict())
