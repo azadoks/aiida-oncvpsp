@@ -31,10 +31,10 @@ class OncvpspParser(Parser):
             return self.exit_codes.ERROR_OUTPUT_FILE_MISSING
         except OSError:
             return self.exit_codes.ERROR_OUTPUT_FILE_UNREADABLE
+        self._report_messages(parser.errors, level="error")
         if len(parser.errors) == 1:
             return self.exit_codes.get(parser.errors[0]["name"].upper(), self.exit_codes.ERROR_UNKNOWN_ERROR)
         elif len(parser.errors) > 1:
-            self._report_messages(parser.errors, level="error")
             return self.exit_codes.ERROR_MULTIPLE_ERRORS
         self._report_messages(parser.warnings, level="warning")
         if not parser.completed:
@@ -222,8 +222,8 @@ class OncvpspParser(Parser):
                     "ecut_recommended": parser.ecut_recommended,
                     "ghosts": parser.ghosts,
                     "num_ghosts": len(parser.ghosts),
-                    "num_positive_ghosts": sum(g["sign"] == "+" for g in parser.ghosts),
-                    "num_negative_ghosts": sum(g["sign"] == "-" for g in parser.ghosts),
+                    "num_positive_ghosts": sum(g["eig"] > 0 for g in parser.ghosts),
+                    "num_negative_ghosts": sum(g["eig"] < 0 for g in parser.ghosts),
                 }
             ),
         )
