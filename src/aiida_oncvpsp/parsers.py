@@ -219,7 +219,7 @@ class OncvpspParser(Parser):
                     **parser.program_information,
                     **parser.teter_parameters,
                     "d2exc_rmse": parser.d2exc_rmse,
-                    "ecut_recommended": parser.ecut_recommended,
+                    "ecut_recommended": parser.ecut_recommended if np.isfinite(parser.ecut_recommended) else None,
                     "ghosts": parser.ghosts,
                     "num_ghosts": len(parser.ghosts),
                     "num_positive_ghosts": sum(g["eig"] > 0 for g in parser.ghosts),
