@@ -1,5 +1,6 @@
 """Tests of `OncvpspParser`: exit codes, always-attached `output_parameters`, partial outputs."""
 
+import numpy as np
 import pytest
 from aiida.plugins import CalculationFactory, ParserFactory
 
@@ -41,6 +42,10 @@ def test_completed_run(generate_calc_job_node):
         "upf",
     ):
         assert label in results, label
+    # Records of l-channels have no j; it is stored as NaN, since ArrayData cannot store None
+    wavefunctions = results["wavefunctions"]
+    assert np.isnan(wavefunctions.get_array("j")).all()
+    assert wavefunctions.get_array("l").dtype.kind == "i"
     # Diagnostics warning from run_diag is attributed
     (warning,) = [w for w in params["warnings"] if w["name"] == "lschvkbbe_not_converged"]
     assert warning["stage"] == "diagnostics" and warning["l"] == 0 and warning["attribution"] == "explicit"

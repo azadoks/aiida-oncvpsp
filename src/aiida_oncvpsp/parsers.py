@@ -215,13 +215,21 @@ def _ragged(records: list[dict], x_key: str, y_keys: list[str]) -> dict[str, np.
     return arrays
 
 
+def _label_array(values: list) -> np.ndarray:
+    """Array of one label of the records; missing values (`None`, e.g. `j` of an l-channel) are NaN,
+    since `ArrayData` cannot store object arrays."""
+    if any(value is None for value in values):
+        return np.array([np.nan if value is None else value for value in values], dtype=float)
+    return np.array(values)
+
+
 def _build_records(records: list[dict], x_key: str, y_keys: list[str], label_keys: list[str] | None = None):
     if not records:
         return None
     array = ArrayData()
-    labels = label_keys if label_keys is not None else sorted(set(records[0]) - {x_key, *y_keys})
+    labels = label_keys if label_keys is not None else sorted(set().union(*records) - {x_key, *y_keys})
     for key in labels:
-        array.set_array(key, np.array([rec[key] for rec in records]))
+        array.set_array(key, _label_array([rec.get(key) for rec in records]))
     for key, values in _ragged(records, x_key, y_keys).items():
         array.set_array(key, values)
     return array
