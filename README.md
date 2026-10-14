@@ -4,24 +4,34 @@ This is an AiiDA plugin for [ONCVPSP](https://github.com/oncvpsp/oncvpsp).
 
 ## Installation
 
-1. Clone `azadoks/oncvpsp:hdf5-output` and install `pyoncvpsp`
-    ```bash
-    git clone https://github.com/azadoks/oncvpsp
-    cd oncvpsp; git checkout -b hdf5-output
-    pip install -e .
-    # [Optional] Compile and install ONCVPSP v4.0.1 with HDF5 output support
-    cmake -S. -Bbuild -DCMAKE_INSTALL_PREFIX=$HOME/.local/share/oncvpsp-4.0.1-hdf5
-    cmake --build build --target install --parallel
-    ```
-
-2. Clone this repository and install `aiida-oncvpsp`
+1. Install [`pyoncvpsp`](https://github.com/azadoks/pyoncvpsp) (pulled in automatically as a dependency) and this plugin
     ```bash
     git clone https://github.com/azadoks/aiida-oncvpsp
     pip install -e ./aiida-oncvpsp
     ```
 
-3. Use `verdi code create core.code.installed` to set up an ONCVPSP `Code` in AiiDA.
+2. Build ONCVPSP 4.0.1 (e.g. from [oncvpsp/oncvpsp](https://github.com/oncvpsp/oncvpsp)) and use
+   `verdi code create core.code.installed` to set up an ONCVPSP `Code` in AiiDA.
     - You can modify [oncvpsp-sr-4.0.1.yaml](examples/oncvpsp-sr-4.0.1.yaml) and use it to create the `Code` with the `--config` flag.
+
+## Outputs and failure reporting
+
+ONCVPSP exits with status 0 even when it stops on an error, so all failure information is parsed from
+its stdout by `pyoncvpsp`. The parser attaches every output it can build, whether or not the run
+completed, and always attaches `output_parameters`, which contains:
+
+- `completed`, `missing_plot_data`, `last_stage_reached`
+- `warnings` / `errors`: every message, with the program `stage` it was printed in, the angular
+  momentum `l` (explicit when ONCVPSP prints it, inferred from the position in the output otherwise),
+  the `scope` of the input parameters it implicates and their flattened names
+  (`implicated_parameters`, e.g. `pseudopotentials__rc__1`)
+- `failure`: the primary (first) error of a failed run with the same attribution, or `null`
+- scalar results (`ecut_recommended`, `ghosts`, Teter parameters, ...) when available
+
+The exit status of a failed run is the code of the stage of its primary failure
+(`aiida_oncvpsp.exit_codes.STAGE_EXIT_CODES`, 610-699). Calculations stored by earlier versions of
+this plugin used one exit code per error name (504-512); `aiida_oncvpsp.exit_codes.exit_status_to_stage`
+interprets both schemes.
 
 ## Example
 

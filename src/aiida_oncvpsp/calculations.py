@@ -2,8 +2,14 @@ from aiida import orm
 from aiida.common import datastructures
 from aiida.engine import CalcJob
 from aiida.plugins import DataFactory
-from pyoncvpsp.io import ERRORS as ONCVPSP_ERRORS
 from pyoncvpsp.io import OncvpspInput
+
+from .exit_codes import (
+    LEGACY_GENERIC_EXIT_CODES,
+    RETRIEVAL_EXIT_CODES,
+    STAGE_EXIT_CODES,
+    STAGE_EXIT_MESSAGES,
+)
 
 ArrayData = DataFactory("core.array")
 XyData = DataFactory("core.array.xy")
@@ -19,6 +25,13 @@ def validate_input_format(value, _):
 
 
 class OncvpspCalculation(CalcJob):
+    """Run ONCVPSP on a set of input parameters and parse its stdout.
+
+    Failures are reported through stage-based exit codes (see `aiida_oncvpsp.exit_codes`); the
+    attributed failure details (message, angular momentum, implicated parameters) are stored in
+    `output_parameters["failure"]`. All outputs which could be parsed are attached even on failure.
+    """
+
     @classmethod
     def define(cls, spec):
         super().define(spec)
@@ -29,7 +42,12 @@ class OncvpspCalculation(CalcJob):
         spec.input("metadata.options.output_filename", valid_type=str, default="oncvpsp.out")
         spec.input("parameters", valid_type=orm.Dict, help="Input parameters for ONCVPSP")
         # Outputs
-        spec.output("output_parameters", valid_type=orm.Dict, required=True)
+        spec.output(
+            "output_parameters",
+            valid_type=orm.Dict,
+            required=True,
+            help="Scalar results, warnings, errors and (if the run failed) the attributed failure.",
+        )
         spec.output("local_potential", valid_type=XyData, required=False)
         spec.output("charge_densities", valid_type=XyData, required=False)
         spec.output("kinetic_energy_densities", valid_type=XyData, required=False)
@@ -43,34 +61,12 @@ class OncvpspCalculation(CalcJob):
         spec.output("psp8", valid_type=Psp8Data, required=False)
         spec.default_output_node = "output_parameters"
         # Exit codes
-        spec.exit_code(
-            301,
-            "ERROR_NO_RETRIEVED_FOLDER",
-            message="The retrieved folder could not be found.",
-        )
-        spec.exit_code(302, "ERROR_OUTPUT_FILE_MISSING", message="The output file is missing.")
-        spec.exit_code(
-            303,
-            "ERROR_OUTPUT_FILE_UNREADABLE",
-            message="The output file could not be read.",
-        )
-        spec.exit_code(
-            304,
-            "ERROR_OUTPUT_PARSING_FAILED",
-            message="The output file could not be parsed.",
-        )
-        spec.exit_code(
-            501,
-            "ERROR_RUN_NOT_COMPLETED",
-            message="The ONCVPSP run did not complete successfully, but no other error was found.",
-        )
-        spec.exit_code(502, "ERROR_UNKNOWN_ERROR", message="An error unknown error occurred.")
-        spec.exit_code(503, "ERROR_MULTIPLE_ERRORS", message="Multiple errors were found in the output file.")
-        # TODO: these exit statuses depend on the order of `pyoncvpsp.io.ERRORS`, so reordering or inserting
-        # errors upstream silently changes the meaning of statuses already stored in the database. Replace with
-        # an explicit, stable mapping of error name to exit status.
-        for i, error in enumerate(ONCVPSP_ERRORS):
-            spec.exit_code(500 + i + 4, error["name"].upper(), message=error["description"])  # type: ignore
+        for status, (label, message) in RETRIEVAL_EXIT_CODES.items():
+            spec.exit_code(status, label, message=message)
+        for status, (label, message) in LEGACY_GENERIC_EXIT_CODES.items():
+            spec.exit_code(status, label, message=message)
+        for stage, (status, label) in STAGE_EXIT_CODES.items():
+            spec.exit_code(status, label, message=STAGE_EXIT_MESSAGES[stage])
 
     def prepare_for_submission(self, folder):
         input_model = OncvpspInput(**self.inputs.parameters.get_dict())
@@ -93,7 +89,7 @@ class OncvpspCalculation(CalcJob):
             raise ValueError(f"Unsupported input format: {self.inputs.metadata.options.input_format}")
 
         with folder.open(input_filename, "w", encoding="utf-8") as handle:
-            handle.write(input_text)
+            handle.write(input_text + "\n")
 
         codeinfo = datastructures.CodeInfo()
         codeinfo.cmdline_params = input_cmdline_params
@@ -103,6 +99,8 @@ class OncvpspCalculation(CalcJob):
 
         calcinfo = datastructures.CalcInfo()
         calcinfo.codes_info = [codeinfo]
+        # The scheduler stderr (`_scheduler-stderr.txt`) is always retrieved by AiiDA; it carries
+        # Fortran runtime errors, which the parser merges into the message analysis
         calcinfo.retrieve_list = [self.inputs.metadata.options.output_filename]
 
         return calcinfo
