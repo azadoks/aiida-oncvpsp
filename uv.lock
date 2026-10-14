@@ -65,7 +65,7 @@ dev = [
 requires-dist = [
     { name = "aiida-core", specifier = ">=2.7.1" },
     { name = "aiida-pseudo", specifier = ">=1.8.0" },
-    { name = "pyoncvpsp", git = "https://github.com/azadoks/pyoncvpsp?rev=e6a3277663b8b3be045a3ee671f152dae137790c" },
+    { name = "pyoncvpsp", git = "https://github.com/azadoks/pyoncvpsp?rev=ad3d76901015a10decb44d5e446031819866d1d0" },
 ]
 
 [package.metadata.requires-dev]
@@ -1631,7 +1631,7 @@ wheels = [
 [[package]]
 name = "pyoncvpsp"
 version = "0.1.0"
-source = { git = "https://github.com/azadoks/pyoncvpsp?rev=e6a3277663b8b3be045a3ee671f152dae137790c#e6a3277663b8b3be045a3ee671f152dae137790c" }
+source = { git = "https://github.com/azadoks/pyoncvpsp?rev=ad3d76901015a10decb44d5e446031819866d1d0#ad3d76901015a10decb44d5e446031819866d1d0" }
 dependencies = [
     { name = "click" },
     { name = "numpy" },
