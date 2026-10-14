@@ -10,6 +10,13 @@ XyData = DataFactory("core.array.xy")
 UpfData = DataFactory("pseudo.upf")
 Psp8Data = DataFactory("pseudo.psp8")
 
+INPUT_FORMATS = ("stdin", "dat", "toml")
+
+
+def validate_input_format(value, _):
+    if value not in INPUT_FORMATS:
+        return f"Unsupported input format `{value}`; must be one of {INPUT_FORMATS}."
+
 
 class OncvpspCalculation(CalcJob):
     @classmethod
@@ -18,9 +25,8 @@ class OncvpspCalculation(CalcJob):
         # Inputs
         spec.input("metadata.options.parser_name", valid_type=str, default="oncvpsp.oncvpsp")
         spec.input("metadata.options.input_filestem", valid_type=str, default="oncvpsp")
-        spec.input("metadata.options.input_format", valid_type=str, default="stdin")
+        spec.input("metadata.options.input_format", valid_type=str, default="stdin", validator=validate_input_format)
         spec.input("metadata.options.output_filename", valid_type=str, default="oncvpsp.out")
-        spec.input("metadata.options.with_hdf5", valid_type=bool, default=False)
         spec.input("parameters", valid_type=orm.Dict, help="Input parameters for ONCVPSP")
         # Outputs
         spec.output("output_parameters", valid_type=orm.Dict, required=True)
@@ -49,12 +55,20 @@ class OncvpspCalculation(CalcJob):
             message="The output file could not be read.",
         )
         spec.exit_code(
+            304,
+            "ERROR_OUTPUT_PARSING_FAILED",
+            message="The output file could not be parsed.",
+        )
+        spec.exit_code(
             501,
             "ERROR_RUN_NOT_COMPLETED",
             message="The ONCVPSP run did not complete successfully, but no other error was found.",
         )
         spec.exit_code(502, "ERROR_UNKNOWN_ERROR", message="An error unknown error occurred.")
         spec.exit_code(503, "ERROR_MULTIPLE_ERRORS", message="Multiple errors were found in the output file.")
+        # TODO: these exit statuses depend on the order of `pyoncvpsp.io.ERRORS`, so reordering or inserting
+        # errors upstream silently changes the meaning of statuses already stored in the database. Replace with
+        # an explicit, stable mapping of error name to exit status.
         for i, error in enumerate(ONCVPSP_ERRORS):
             spec.exit_code(500 + i + 4, error["name"].upper(), message=error["description"])  # type: ignore
 
@@ -81,20 +95,14 @@ class OncvpspCalculation(CalcJob):
         with folder.open(input_filename, "w", encoding="utf-8") as handle:
             handle.write(input_text)
 
-        hdf5_cmdline_params = []
-        hdf5_retrieve_list = []
-        if self.inputs.metadata.options.with_hdf5:
-            hdf5_cmdline_params = ["-h5", self.inputs.metadata.options.hdf5_filename]
-            hdf5_retrieve_list = [self.inputs.metadata.options.hdf5_filename]
-
         codeinfo = datastructures.CodeInfo()
-        codeinfo.cmdline_params = input_cmdline_params + hdf5_cmdline_params
+        codeinfo.cmdline_params = input_cmdline_params
         codeinfo.code_uuid = self.inputs.code.uuid
         codeinfo.stdin_name = stdin_name
         codeinfo.stdout_name = self.inputs.metadata.options.output_filename
 
         calcinfo = datastructures.CalcInfo()
         calcinfo.codes_info = [codeinfo]
-        calcinfo.retrieve_list = [self.inputs.metadata.options.output_filename] + hdf5_retrieve_list
+        calcinfo.retrieve_list = [self.inputs.metadata.options.output_filename]
 
         return calcinfo

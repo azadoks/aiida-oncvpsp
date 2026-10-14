@@ -19,9 +19,6 @@ pyoncvpsp = { git = "https://github.com/azadoks/pyoncvpsp" }
 [tool.ruff]
 line-length = 120
 
-[project.scripts]
-aiida-oncvpsp = "aiida_oncvpsp:main"
-
 [project.entry-points.'aiida.calculations']
 'oncvpsp.oncvpsp' = 'aiida_oncvpsp.calculations:OncvpspCalculation'
 
