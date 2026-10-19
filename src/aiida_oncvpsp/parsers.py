@@ -9,6 +9,7 @@ from aiida.parsers import Parser
 from pyoncvpsp.io import OncvpspTextParser
 from pyoncvpsp.io.output import Level, Stage
 
+from .calculations import AE_FILENAME
 from .exit_codes import STAGE_EXIT_CODES
 
 ArrayData = plugins.DataFactory("core.array")
@@ -53,6 +54,13 @@ class OncvpspParser(Parser):
         self._report_messages(parser)
 
         outputs, build_failed = self._build_outputs(parser)
+        if parser.stage == "ae" and parser.completed:
+            try:
+                with retrieved.open(AE_FILENAME, "rb") as fp:
+                    outputs["ae_file"] = orm.SinglefileData(io.BytesIO(fp.read()), filename=AE_FILENAME)
+            except (FileNotFoundError, OSError):
+                self.logger.error(f"The all-electron stage completed but `{AE_FILENAME}` was not retrieved.")
+                build_failed = True
         for label, node in outputs.items():
             self.out(label, node)
 
@@ -88,6 +96,9 @@ class OncvpspParser(Parser):
         }
         outputs: dict[str, orm.Data] = {}
         failed = False
+        if parser.stage == "ae":
+            # the all-electron stage stops before the pseudopotential and its plotting data
+            builders = {}
         for label, builder in builders.items():
             try:
                 node = builder(parser)
@@ -131,6 +142,7 @@ def _failure_summary(parser: OncvpspTextParser) -> dict:
     messages = parser.messages
     return {
         "completed": parser.completed,
+        "stage": parser.stage,
         "missing_plot_data": parser.missing_plot_data,
         "last_stage_reached": parser.last_stage_reached.value,
         "warnings": [m.as_dict() for m in messages if m.level == Level.WARNING],
@@ -148,6 +160,9 @@ def _build_output_parameters(parser: OncvpspTextParser) -> orm.Dict:
     for getter in {
         "program_information": lambda: dict(parser.program_information),
         "teter_parameters": lambda: dict(parser.teter_parameters),
+        "budgeted_core": lambda: {"budgeted_core": parser.budgeted_core},
+        "ionic_tail": lambda: {"ionic_tail": parser.ionic_tail},
+        "coulomb_tail": lambda: {"coulomb_tail": parser.coulomb_tail},
         "d2exc_rmse": lambda: {"d2exc_rmse": parser.d2exc_rmse},
         "ecut_recommended": lambda: {"ecut_recommended": parser.ecut_recommended},
         "ghosts": lambda: {
@@ -160,7 +175,8 @@ def _build_output_parameters(parser: OncvpspTextParser) -> orm.Dict:
         try:
             optional.update(getter())
         except Exception:  # pylint: disable=broad-except
-            if parser.completed:
+            # the all-electron stage completes before any of these is printed
+            if parser.completed and parser.stage != "ae":
                 raise
     return orm.Dict(_finite_or_none({**optional, **summary}))
 
