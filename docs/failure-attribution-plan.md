@@ -127,8 +127,39 @@ Phases 1 and 2 implemented (uncommitted in both repos). Decisions taken during i
   parsed text when it contains a runtime-error marker, and pyoncvpsp attributes it to the last stage.
 - `qroots` failures could not be triggered with Si (even `qcut = 0.05`); the pending-`l` rule is covered
   by a synthetic test only.
-- Phase 3 (oncvpsp-opt) not started; `exit_status_to_stage` in `aiida_oncvpsp.exit_codes` is the hook
-  for relabelling old rows.
+- Phase 3 (oncvpsp-opt) implemented on 2026-10-14 (uncommitted), opt-in via
+  `OncvpspOptimizer(feasibility_mode="by_ell")`; the default `"global"` mode keeps the old single
+  `feasible = exit_status == 0` label and classifier. Details:
+  - `oncvpsp_opt.optimizer.failure`: `FAILURE_COLUMNS` (`fail_name, fail_stage, fail_scope, fail_ell,
+    fail_attribution, fail_params, fail_last_ell, fail_source`), `feasibility_labels` /
+    `add_feasibility_labels` (`feasible_attributed`, `feasible_{ell}`, `feasible_global`),
+    `failure_from_dict`, `failure_from_exit_status`.
+  - `OncvpspOptimizer._failure_as_extra_shim` (like the ecut / nu shims) stores the attributed failure of
+    every failed run once as extras of the evaluation work chain: `failure` (the serialized
+    `OncvpspFailure`, `None` for a completed run) and `failure_source` (`"output_parameters"` when copied
+    from the stored output, `"reparsed"` for legacy runs re-attributed by re-parsing their retrieved
+    `oncvpsp.out` (+ stderr) with the current pyoncvpsp, ~12 ms per run). `get_trials_failure` runs the
+    shim and reads the extras back; failed runs without extras fall back to `failure_from_exit_status`.
+    Re-parsing was chosen over `exit_status_to_stage` because legacy codes >= 513 are ambiguous across
+    pyoncvpsp revisions (513 was `wellstate_no_bound_state`, `rxpsh_too_small` or
+    `qcut_reduction_failed` depending on the pin) and because it recovers `l` (all 1217 legacy failures in
+    `N/PBE/upf/dev/pd06` were attributed to a channel; the 23 legacy 504 runs are completed runs).
+    Columns are always joined into `get_trials()`; legacy runs are re-parsed only in `by_ell` mode or with
+    `get_trials(reparse_legacy=True)`. The shim was verified read-only first (extras writes patched out
+    in the probe) and then run for real on 2026-10-14: the 1240 failed N runs in the dev profile now carry
+    `failure` / `failure_source = "reparsed"` extras.
+  - Labels: sequential stages (`semilocal`, `vkb`) give 1 for `ell < l` and NaN for `ell > l`; later stages
+    give 1 for `ell != l`; `feasible_global` is 0 for `ell_and_local` / `local` / unattributed failures.
+  - `fit_feasibility_rfc` fits one RFC per outcome on the channel's active dims (global: all dims), masking
+    NaN labels; `models.predict_feasibility` reduces a `ModelList` to `prod_k p_k` (`combine_feasibility`),
+    so `initialize`, `generate_candidates*` and `OncvOptProblem` need no changes.
+  - Bug fixed on the way: `EnsembleRandomForestClassifier.forward` returned the trees' label-encoded class
+    indices instead of the class values (wrong for single-class or non-contiguous class sets).
+  - By-ell sampling in `initialize` now records the perturbed channel in the `perturbed_ell` extra
+    (`submit(..., perturbed_ells=...)`, `sampled_ells`); `get_trials_input` projects it.
+  - oncvpsp-opt now depends on `aiida-oncvpsp` (git pin) and pins pyoncvpsp `e6a3277`.
+  - Not done: the pymoo path only uses by-ell sampling for the initial population, so no `perturbed_ell`
+    there; `fit_feasibility_gp` remains single-outcome.
 
 ## Upstream ONCVPSP PR candidates
 
