@@ -2,10 +2,10 @@ import io
 import logging
 from collections.abc import Callable
 
+import numpy as np
 from aiida import orm, plugins
 from aiida.common.exceptions import NotExistent
 from aiida.parsers import Parser
-import numpy as np
 from pyoncvpsp.io import OncvpspTextParser
 from pyoncvpsp.io.output import Level, Stage
 
@@ -61,7 +61,7 @@ class OncvpspParser(Parser):
             if build_failed:
                 return self.exit_codes.ERROR_OUTPUT_PARSING_FAILED
             return None
-        status, label = STAGE_EXIT_CODES.get(failure.stage, STAGE_EXIT_CODES[Stage.UNKNOWN])
+        _, label = STAGE_EXIT_CODES.get(failure.stage, STAGE_EXIT_CODES[Stage.UNKNOWN])
         return self.exit_codes[label]
 
     def _read_stderr(self, retrieved) -> str:
@@ -145,7 +145,7 @@ def _build_output_parameters(parser: OncvpspTextParser) -> orm.Dict:
     summary = _failure_summary(parser)
     optional: dict = {}
     # Each of these may legitimately be unavailable when the run stopped early
-    for key, getter in {
+    for getter in {
         "program_information": lambda: dict(parser.program_information),
         "teter_parameters": lambda: dict(parser.teter_parameters),
         "d2exc_rmse": lambda: {"d2exc_rmse": parser.d2exc_rmse},
@@ -156,7 +156,7 @@ def _build_output_parameters(parser: OncvpspTextParser) -> orm.Dict:
             "num_positive_ghosts": sum(g["eig"] > 0 for g in parser.ghosts),
             "num_negative_ghosts": sum(g["eig"] < 0 for g in parser.ghosts),
         },
-    }.items():
+    }.values():
         try:
             optional.update(getter())
         except Exception:  # pylint: disable=broad-except

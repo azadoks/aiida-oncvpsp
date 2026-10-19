@@ -43,12 +43,13 @@ from aiida.engine import run
 from aiida.plugins import CalculationFactory
 from pyoncvpsp.io import OncvpspInput
 from aiida_oncvpsp.calcfunctions import compute_log_der_rmse
+
 OncvpspCalculation = CalculationFactory("oncvpsp.oncvpsp")
 load_profile()
 
 # %% Define the calculation input
 _input = OncvpspInput.from_dat_string(
-"""# ATOM AND REFERENCE CONFIGURATION
+    """# ATOM AND REFERENCE CONFIGURATION
 #    atsym          z         nc         nv       iexc     psfile
         Li    3.00000          0          2          3       psp8
 #        n          l          f
@@ -88,7 +89,8 @@ _input = OncvpspInput.from_dat_string(
 #        n          l          f
          1          0    2.00000
          2          1    1.00000
-""")
+"""
+)
 # Modify some parameters
 _input.log_derivative_analysis.epsh1 = -12.0
 _input.log_derivative_analysis.epsh2 = +12.0
@@ -100,15 +102,11 @@ builder.code = orm.load_code("oncvpsp-sr-4.0.1")
 builder.parameters = orm.Dict(dict=_input.model_dump())
 builder.metadata.options.resources = {"num_machines": 1}
 
-#%% Run the calculation (blocking)
+# %% Run the calculation (blocking)
 result = run(builder)
 
 # %% Compute RMSE errors of the log derivatives
-ld_errors = compute_log_der_rmse(
-    log_derivatives=result["log_derivatives"],
-    e_min=orm.Float(-2.0),
-    e_max=orm.Float(6.0)
-)
+ld_errors = compute_log_der_rmse(log_derivatives=result["log_derivatives"], e_min=orm.Float(-2.0), e_max=orm.Float(6.0))
 ```
 
 ## Acknowledgements

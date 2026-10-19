@@ -1,6 +1,7 @@
 """Consistency of the exit-code tables."""
 
 from aiida.plugins import CalculationFactory
+from pyoncvpsp.io.output import ERRORS, Stage
 
 from aiida_oncvpsp.exit_codes import (
     LEGACY_EXIT_CODES,
@@ -11,7 +12,6 @@ from aiida_oncvpsp.exit_codes import (
     exit_status_to_stage,
     legacy_exit_codes_for,
 )
-from pyoncvpsp.io.output import ERRORS, Stage
 
 
 def test_every_stage_has_a_code():

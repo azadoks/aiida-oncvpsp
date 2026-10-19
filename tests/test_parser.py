@@ -3,9 +3,9 @@
 import numpy as np
 import pytest
 from aiida.plugins import CalculationFactory, ParserFactory
+from pyoncvpsp.io.output import Stage
 
 from aiida_oncvpsp.exit_codes import STAGE_EXIT_CODES, exit_status_to_stage
-from pyoncvpsp.io.output import Stage
 
 OncvpspCalculation = CalculationFactory("oncvpsp.oncvpsp")
 

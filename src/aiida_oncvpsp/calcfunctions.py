@@ -1,6 +1,6 @@
+import numpy as np
 from aiida.engine import calcfunction
 from aiida.plugins import DataFactory
-import numpy as np
 
 ArrayData = DataFactory("core.array")
 Float = DataFactory("core.float")
