@@ -14,7 +14,7 @@ dependencies = [
 ]
 
 [tool.uv.sources]
-pyoncvpsp = { git = "https://github.com/azadoks/pyoncvpsp", rev = "ad3d76901015a10decb44d5e446031819866d1d0" }
+pyoncvpsp = { git = "https://github.com/azadoks/pyoncvpsp", rev = "564f90617e532c1ce9dbdb1377b4b80dcd71f7bf" }
 
 [tool.ruff]
 line-length = 120
