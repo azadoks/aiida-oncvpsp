@@ -71,7 +71,7 @@ dev = [
 requires-dist = [
     { name = "aiida-core", specifier = ">=2.9.3" },
     { name = "aiida-pseudo", specifier = ">=1.10.0" },
-    { name = "pyoncvpsp", git = "https://github.com/azadoks/pyoncvpsp?rev=564f90617e532c1ce9dbdb1377b4b80dcd71f7bf" },
+    { name = "pyoncvpsp", editable = "../pyoncvpsp-model-core-v2" },
 ]
 
 [package.metadata.requires-dev]
@@ -2112,7 +2112,7 @@ wheels = [
 [[package]]
 name = "pyoncvpsp"
 version = "0.1.0"
-source = { git = "https://github.com/azadoks/pyoncvpsp?rev=564f90617e532c1ce9dbdb1377b4b80dcd71f7bf#564f90617e532c1ce9dbdb1377b4b80dcd71f7bf" }
+source = { editable = "../pyoncvpsp-model-core-v2" }
 dependencies = [
     { name = "click" },
     { name = "numpy", version = "2.4.6", source = { registry = "https://pypi.org/simple" }, marker = "python_full_version < '3.12'" },
@@ -2120,6 +2120,23 @@ dependencies = [
     { name = "pydantic" },
     { name = "pydantic-numpy" },
     { name = "toml" },
+]
+
+[package.metadata]
+requires-dist = [
+    { name = "click", specifier = ">=8.1.0" },
+    { name = "numpy", specifier = ">=1.21,<3" },
+    { name = "pydantic", specifier = ">=2.12.4" },
+    { name = "pydantic-numpy" },
+    { name = "toml", specifier = ">=0.10.2" },
+]
+
+[package.metadata.requires-dev]
+dev = [
+    { name = "pre-commit", specifier = ">=4.5.1" },
+    { name = "pyrefly", specifier = ">=1.3.2" },
+    { name = "pytest", specifier = ">=9.1.1" },
+    { name = "ruff", specifier = ">=0.15.4" },
 ]
 
 [[package]]
