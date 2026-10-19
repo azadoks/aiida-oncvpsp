@@ -161,6 +161,8 @@ def _build_output_parameters(parser: OncvpspTextParser) -> orm.Dict:
         "program_information": lambda: dict(parser.program_information),
         "teter_parameters": lambda: dict(parser.teter_parameters),
         "budgeted_core": lambda: {"budgeted_core": parser.budgeted_core},
+        "ionic_tail": lambda: {"ionic_tail": parser.ionic_tail},
+        "coulomb_tail": lambda: {"coulomb_tail": parser.coulomb_tail},
         "d2exc_rmse": lambda: {"d2exc_rmse": parser.d2exc_rmse},
         "ecut_recommended": lambda: {"ecut_recommended": parser.ecut_recommended},
         "ghosts": lambda: {

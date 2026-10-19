@@ -82,3 +82,5 @@ def test_parse_ps_stage(generate_calc_job_node):
     assert params["stage"] == "ps"
     assert params["ecut_recommended"] is not None
     assert "ae_file" not in results
+    # the build of the Si fixture has no ionic tail
+    assert params["ionic_tail"] is None and params["coulomb_tail"] is None
