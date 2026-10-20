@@ -28,7 +28,7 @@ repos:
           - "aiida-core>=2.9.3"
           - "aiida-pseudo>=1.10.0"
           # Keep in sync with the pyoncvpsp rev pinned in pyproject.toml
-          - "pyoncvpsp@git+https://github.com/azadoks/pyoncvpsp@63cd1919ff2e16db0ae33419d5b1ad198084b9db"
+          - "pyoncvpsp@git+https://github.com/azadoks/pyoncvpsp@bd20dda880bf2cfb7ebfae5a48ad0d660dfc2c7d"
           - "pytest>=9.1.1"
 
   - repo: https://github.com/commitizen-tools/commitizen
